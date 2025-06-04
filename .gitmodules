@@ -1,0 +1,3 @@
+[submodule "src/cpp/Extern/AudioFile"]
+	path = src/cpp/Extern/AudioFile
+	url = https://github.com/adamstark/AudioFile.git
