@@ -21,6 +21,10 @@
 #include <cmath>
 #include <utility>
 
+inline constexpr double Eps6  = 1.e-6;
+inline constexpr double Eps9  = 1.e-9;
+inline constexpr double Eps12 = 1.e-12;
+
 #define TRM_CONSTEXPR inline static constexpr
 
 #define TRM_DEFINE_POW(x,exp) const double x ## exp = std::pow(x, exp)
