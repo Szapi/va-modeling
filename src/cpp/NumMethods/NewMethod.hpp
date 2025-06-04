@@ -1,0 +1,92 @@
+/*
+ * Copyright (C) 2025 Ték Róbert Máté <eppenpontaz@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include "NewMethod_ODE_Descriptor.hpp"
+#include "Utility.hpp"
+
+#include <type_traits>
+
+namespace TRM::NewMethod
+{
+
+    // "A new adaptive nonlinear numerical method for singular and stiff differential problems"
+    // <https://doi.org/10.1016/j.aej.2023.05.055>
+    // This is a non-adaptive (fixed time step) implementation of the method.
+    template<double H, ODE_Descriptor ODE>
+    class Executor
+    {
+    public:
+        Executor(std::integral_constant<double, H>, double y0, ODE&& ode)
+            : y{y0}
+            , derivativeCalculator{std::move(ode)}
+        {}
+
+        double DoOneStep()
+        {
+            const auto [f,b,c,d,e] = derivativeCalculator(y);
+
+            TRM_DEFINE_POW(b, 2);
+            TRM_DEFINE_POW(b, 3);
+            TRM_DEFINE_POW(b, 4);
+
+            TRM_DEFINE_POW(c, 2);
+            TRM_DEFINE_POW(c, 3);
+
+            TRM_DEFINE_POW(d, 2);
+
+            TRM_DEFINE_POW(f, 2);
+            TRM_DEFINE_POW(f, 3);
+            
+            TRM_DEFINE_POW(y, 2);
+
+            constexpr double H2 = H * H;
+            constexpr double H3 = H * H * H;
+
+            const double alpha = ((-12)*c*e) + (15*d2);
+            const double P     = (alpha*H2) + ((36*b*e-60*c*d)*H) - (180*b*d) + (240*c2);
+            const double beta  = ((-90)*b2*d + (36*f*e + 120*c2)*b - 60*f*c*d)*H2;
+            const double gamma = ((-72)*f2*e) - (360*b2*c);
+            const double delta = (360*f2*d) - (1440*f*b*c) + (1080*b3);
+
+            const double num = (P*y2) + (2*beta + (gamma + 480*f*c2)*H + delta)*y - 72*H*((f3*e - 5*f2*b*d - (10./3.)*f2*c2 + 15*f*b2*c - (15./2.)*b4)*H - 5*f3*d + 20*f2*b*c - 15*f*b3);
+            const double den = (P*y) + ((-18)*b2*e + 60*b*c*d - alpha*f - 40*c3)*H3 + beta + (gamma + 180*f*b*d + 240*f*c2)*H + delta;
+
+            y = num / den;
+
+            TRM_DEBUG_PRINT_NL(alpha);
+            TRM_DEBUG_PRINT_NL(P);
+            TRM_DEBUG_PRINT_NL(beta);
+            TRM_DEBUG_PRINT_NL(gamma);
+            TRM_DEBUG_PRINT_NL(delta);
+            TRM_DEBUG_PRINT_NL(num);
+            TRM_DEBUG_PRINT_NL(den);
+            TRM_DEBUG_PRINT_NL(y);
+            TRM_DEBUG_BREAK
+
+            return y;
+        }
+
+        double GetValue() const { return y; }
+
+    private:
+        double y;
+        ODE derivativeCalculator;
+    };
+
+} // namespace TRM::NewMethod
