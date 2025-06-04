@@ -48,6 +48,26 @@ namespace TRM
         std::size_t idxBegin = 0u;
     };
 
+
+    template<std::size_t Sz>
+    auto CreateBufferLoader (CircleBuffer<double, Sz>& dest, const auto& src)
+    {
+        return [&dest, audioSource = src.cbegin(), samplesLeft = src.size()](const std::size_t n) mutable
+        {
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                if (samplesLeft > 0)
+                {
+                    dest.RotateLeft() = *audioSource;
+                    ++audioSource;
+                    --samplesLeft;
+                }
+                else
+                    dest.RotateLeft() = 0.;
+            }
+        };
+    }
+
 } // namespace TRM
 
 namespace std
