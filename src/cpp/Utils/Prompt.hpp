@@ -22,6 +22,9 @@
 #include <limits>
 #include <string_view>
 
+// Slightly over-the-top C++ template metaprogramming magic to define
+// reusable command-line prompts with automatic predicate checking.
+// Example usage can be seen in the C++ executables.
 namespace TRM
 {
 
@@ -53,7 +56,7 @@ namespace TRM
         requires std::predicate<decltype(PartInfo<P>::Predicate), typename PartInfo<P>::Type>;
     };
 
-    #define PROMPT_PART(Name, Type, Message, L) \
+#define PROMPT_PART(Name, Type, Message, L) \
     constexpr const char Name ## _Prompt_Message [] = Message; \
     using Name = Part<Type, Name ## _Prompt_Message, L>; \
     static_assert(IsValidPart<Name>)
@@ -71,7 +74,7 @@ namespace TRM
     template<class T>
     constexpr bool h = HasPreferences<T>;
 
-    #define PROMPT_PREFERENCES(Type, ...) \
+#define PROMPT_PREFERENCES(Type, ...) \
     template<> struct TRM::PromptPreferences<Type> { using Parts = std::tuple<__VA_ARGS__>; }
 
     template<class T> requires (!HasPreferences<T>)
