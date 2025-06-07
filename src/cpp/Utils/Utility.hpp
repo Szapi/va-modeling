@@ -59,4 +59,39 @@ namespace TRM
         return std::lerp(lower.y, upper.y, (x - lower.x) / (upper.x - lower.x));
     }
 
+    // Returns a subarray of the compile-time array 'arr'
+    template<std::size_t N, std::size_t Start>
+    consteval auto EveryNth(const auto& arr)
+    {
+        std::array<double, (std::size(arr) - Start + N - 1) / N> result;
+        auto i = Start;
+        for(double& d : result)
+        {
+            d = arr[i];
+            i += N;
+        }
+        return result;
+    }
+
+    namespace _UnitTests
+    {
+        inline constexpr std::array<double, 8> arr { 0., 1., 2., 3., 4., 5., 6., 7.};
+
+        inline constexpr auto sub1 = EveryNth<4, 0>(arr);
+        static_assert(sub1.size() == 2 && sub1[0] == 0. && sub1[1] == 4.);
+
+        inline constexpr auto sub2 = EveryNth<4, 1>(arr);
+        static_assert(sub2.size() == 2 && sub2[0] == 1. && sub2[1] == 5.);
+
+        inline constexpr auto sub3 = EveryNth<4, 2>(arr);
+        static_assert(sub3.size() == 2 && sub3[0] == 2. && sub3[1] == 6.);
+
+        inline constexpr auto sub4 = EveryNth<4, 3>(arr);
+        static_assert(sub4.size() == 2 && sub4[0] == 3. && sub4[1] == 7.);
+
+        inline constexpr auto sub5 = EveryNth<4, 4>(arr);
+        static_assert(sub5.size() == 1 && sub5[0] == 4.);
+
+    } // namespace _UnitTest
+
 } // namespace TRM
