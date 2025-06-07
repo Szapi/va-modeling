@@ -15,38 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Prompt.hpp"
-#include "CircleBuffer.hpp"
-#include "Stencil.hpp"
-#include "FiniteDifferenceMethod.hpp"
+#include "AudioFilePrompt.hpp"
 #include "RungeKutta4.hpp"
-#include "Utility.hpp"
 #include "TS808Components.hpp"
+#include "Utility.hpp"
 
-#include "AudioFile/AudioFile.h"
-
-#include <iostream>
 #include <cmath>
 #include <format>
-#include <filesystem>
+#include <iostream>
 #include <ranges>
 
 using namespace std;
 using namespace TRM;
 
-struct ExistingAudioFile : AudioFile<double> { using AudioFile<double>::AudioFile; };
-
-PROMPT_PART(ExistingWavPath, std::string, "Enter file path (.wav, must exist): ", [](const std::string& s){
-    std::filesystem::path p {s};
-    return std::filesystem::exists(p) && p.extension().compare(".wav") == 0;
-});
-
-PROMPT_PREFERENCES(ExistingAudioFile, ExistingWavPath);
-
 int main ()
 {
     const auto inputFile192 = Prompt<ExistingAudioFile> ("Enter input guitar DI file (192 kHz, > 10 samples, stereo)",
-                                                      [](const AudioFile<double>& f) { return f.getSampleRate() == 192'000 && f.samples[0].size() > 10u && f.samples.size() == 2u; });
+                                                         AllOf | NonEmpty | Stereo | SampleRate(192'000));
     inputFile192.printSummary();
 
     constexpr std::size_t LeftCh  = 0u;
@@ -64,7 +49,7 @@ int main ()
     cout << " ! Assuming Left channel is raw guitar DI, Right channel is 720 Hz high-passed version of Left channel !\n";
 
     const auto diffIn96File = Prompt<ExistingAudioFile>("Enter guitar DI 1st derivative wav file (96 kHz)",
-                                                        [](const AudioFile<double>& f) { return f.getSampleRate() == 96'000 && f.samples[0].size() > 10u; });
+                                                        AllOf | NonEmpty | SampleRate(96'000));
     diffIn96File.printSummary();
     constexpr double diffWavScale = 1. / 0.00033;
     auto diffIn96  = diffIn96File.samples[LeftCh] | views::transform([](double d){ return d * diffWavScale; });
@@ -106,7 +91,7 @@ int main ()
     outputFile.setSampleRate(48'000);
     outputFile.setBitDepth(24);
     outputFile.setAudioBuffer({move(output48)});
-    auto outputFileName = Prompt<string>("Enter output file name (op amp output / 10): ", [](auto){ return true; });
+    auto outputFileName = Prompt<string>("Enter output file name (op amp output / 10): ");
     if (!outputFile.save(outputFileName))
     {
         cout << " ! Failed to write output file !\n";

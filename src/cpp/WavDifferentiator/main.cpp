@@ -15,42 +15,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <ranges>
-#include <algorithm>
-#include <numeric>
-#include <utility>
-#include <iterator>
-#include <iomanip>
-#include <filesystem>
-
-#include "Prompt.hpp"
+#include "AudioFilePrompt.hpp"
 #include "CircleBuffer.hpp"
+#include "FiniteDifferenceMethod.hpp"
 #include "Utility.hpp"
 
-#include "Stencil.hpp"
-#include "FiniteDifferenceMethod.hpp"
-
-#include "AudioFile/AudioFile.h"
+#include <algorithm>
+#include <iomanip>
+#include <iterator>
+#include <numeric>
+#include <ranges>
+#include <utility>
 
 using namespace std;
 using namespace TRM;
 
-struct ExistingAudioFile : AudioFile<double> { using AudioFile<double>::AudioFile; };
-
-PROMPT_PART(ExistingWavPath, std::string, "Enter file path (.wav, must exist): ", [](const std::string& s){
-    std::filesystem::path p {s};
-    return std::filesystem::exists(p) && p.extension().compare(".wav") == 0;
-});
-
-PROMPT_PREFERENCES(ExistingAudioFile, ExistingWavPath);
-
-
 int main ()
 {
     const auto inputFile192 = Prompt<ExistingAudioFile>("Enter input guitar DI file (192 kHz, > 10 samples, stereo)",
-                                                        [](const AudioFile<double> &f)
-                                                        { return f.getSampleRate() == 192'000 && f.samples[0].size() > 10u && f.samples.size() == 2u; });
+                                                        AllOf | SampleRate(192'000) | NonEmpty | Stereo);
     inputFile192.printSummary();
 
     constexpr std::size_t LeftCh = 0u;

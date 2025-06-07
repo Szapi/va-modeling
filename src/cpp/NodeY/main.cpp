@@ -15,35 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Prompt.hpp"
+#include "AudioFilePrompt.hpp"
 #include "CircleBuffer.hpp"
-#include "Stencil.hpp"
 #include "FiniteDifferenceMethod.hpp"
-#include "Utility.hpp"
 #include "TS808Components.hpp"
-#include "Decimation.hpp"
+#include "Utility.hpp"
 
-#include "AudioFile/AudioFile.h"
-
-#include <iostream>
 #include <cmath>
 #include <format>
-#include <filesystem>
 #include <numeric>
 #include <ranges>
 
 using namespace std;
 using namespace TRM;
-
-struct ExistingAudioFile : AudioFile<double> { using AudioFile<double>::AudioFile; };
-
-PROMPT_PART(ExistingWavPath, std::string, "Enter file path (.wav, must exist): ", [](const std::string& s){
-    std::filesystem::path p {s};
-    return std::filesystem::exists(p) && p.extension().compare(".wav") == 0;
-});
-
-PROMPT_PREFERENCES(ExistingAudioFile, ExistingWavPath);
-
 
 class IIR_HighPass
 {
@@ -76,7 +60,7 @@ private:
 int main ()
 {
     auto inputFile48 = Prompt<ExistingAudioFile> ("Enter input guitar DI file (48 kHz, > 10 samples)",
-                                                  [](const AudioFile<double>&) { return true; });
+                                                  AllOf | NonEmpty | SampleRate(48'000));
     inputFile48.printSummary();
 
     constexpr std::size_t LeftCh  = 0u;
@@ -113,7 +97,7 @@ int main ()
         outputFile.setSampleRate(48'000);
         outputFile.setBitDepth(24);
         outputFile.setAudioBuffer({move(out48)});
-        auto outputFileName = Prompt<string>(prompt, [](auto){ return true; });
+        auto outputFileName = Prompt<string>(prompt);
         if (!outputFile.save(outputFileName))
         {
             cout << " ! Failed to write output file !\n";

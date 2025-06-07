@@ -24,7 +24,7 @@
 
 // Slightly over-the-top C++ template metaprogramming magic to define
 // reusable command-line prompts with automatic predicate checking.
-// Example usage can be seen in the C++ executables.
+// Example usage can be seen in AudioFilePrompt.hpp
 namespace TRM
 {
 
@@ -77,8 +77,8 @@ namespace TRM
 #define PROMPT_PREFERENCES(Type, ...) \
     template<> struct TRM::PromptPreferences<Type> { using Parts = std::tuple<__VA_ARGS__>; }
 
-    template<class T> requires (!HasPreferences<T>)
-    T Prompt(const std::string_view message, std::predicate<T> auto&& predicate = [](const T&){ return true; })
+    template<class T>
+    T Prompt(const std::string_view message, std::predicate<T> auto&& predicate)
     {
         using namespace std;
 
@@ -93,6 +93,12 @@ namespace TRM
         return t;
     }
 
+    template<class T>
+    T Prompt(const std::string_view message)
+    {
+        return Prompt<T>(message, [](const auto&) { return true; });
+    }
+
     template<class T, class... Parts> requires (IsPart<Parts> && ...)
     T Prompt(std::tuple<Parts...>)
     {
@@ -100,7 +106,7 @@ namespace TRM
     }
 
     template<HasPreferences T>
-    T Prompt(const std::string_view message, std::predicate<T> auto&& predicate = [](const T&){ return true; })
+    T Prompt(const std::string_view message, std::predicate<T> auto&& predicate)
     {
         using namespace std;
 
@@ -112,6 +118,41 @@ namespace TRM
                 return obj;
             cout << "   That is not valid ! Try again.\n";
         }
+    }
+
+    template<HasPreferences T>
+    T Prompt(const std::string_view message)
+    {
+        return Prompt<T>(message, [](const auto&) { return true; });
+    }
+
+    // Ability to combine and reuse different perdicates
+    struct CombineablePredicate {};
+
+    template<class T>
+    concept IsCombineablePredicate = std::is_base_of_v<CombineablePredicate, std::remove_cvref_t<T>>;
+
+    template<class L, class R>
+    struct CombinedPredicate : CombineablePredicate
+    {
+        CombinedPredicate(L&& left, R&& right) : left{std::move(left)}, right{std::move(right)} {}
+        bool operator()(const auto& x) const { return left(x) && right(x); }
+    private:
+        L left;
+        R right;
+    };
+
+    struct CombineSeed : CombineablePredicate
+    {
+        bool operator()(const auto&) const { return true; }
+    };
+
+    inline constexpr CombineSeed AllOf{};
+
+    template<IsCombineablePredicate L, class R>
+    constexpr auto operator | (L&& left, R&& right)
+    {
+        return CombinedPredicate<decltype(left), decltype(right)>{std::move(left), std::move(right)};
     }
 
 } // namespace TRM

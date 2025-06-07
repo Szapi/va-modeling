@@ -15,49 +15,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Prompt.hpp"
+#include "AudioFilePrompt.hpp"
 #include "CircleBuffer.hpp"
-#include "Stencil.hpp"
 #include "FiniteDifferenceMethod.hpp"
-#include "Utility.hpp"
 #include "TS808Components.hpp"
+#include "Utility.hpp"
 
-#include <iostream>
-#include <functional>
-#include <filesystem>
 #include <fstream>
+#include <functional>
 #include <ranges>
-
-#include "AudioFile/AudioFile.h"
 
 using namespace std;
 using namespace TRM;
-
-struct ExistingAudioFile : AudioFile<double> { using AudioFile<double>::AudioFile; };
-
-PROMPT_PART(ExistingFilePath, std::string, "Enter file path (must exist)", [](const std::string& s){
-    std::filesystem::path p {s};
-    return std::filesystem::exists(p);
-});
-
-PROMPT_PREFERENCES(ExistingAudioFile, ExistingFilePath);
 
 constexpr int ExpectedSampleRate = 48'000;
 
 int main ()
 {
-    auto CorrectSampleRate = [](const AudioFile<double>& f){ return f.getSampleRate() == ExpectedSampleRate; };
+    const auto CorrectInputFile = AllOf | SampleRate(ExpectedSampleRate) | NonEmpty;
 
-    auto vOP_P_d_wav = Prompt<ExistingAudioFile> ("Path to V(OP_P_d): ", CorrectSampleRate);
+    auto vOP_P_d_wav = Prompt<ExistingAudioFile> ("Path to V(OP_P_d) (48 kHz): ", CorrectInputFile);
     vOP_P_d_wav.printSummary();
 
-    auto vOP_N_d_wav = Prompt<ExistingAudioFile> ("Path to V(OP_N_d): ", CorrectSampleRate);
+    auto vOP_N_d_wav = Prompt<ExistingAudioFile> ("Path to V(OP_N_d): ", CorrectInputFile);
     vOP_N_d_wav.printSummary();
 
-    auto vOP_OUT_d_wav = Prompt<ExistingAudioFile> ("Path to V(OP_OUT_d): ", CorrectSampleRate);
+    auto vOP_OUT_d_wav = Prompt<ExistingAudioFile> ("Path to V(OP_OUT_d): ", CorrectInputFile);
     vOP_OUT_d_wav.printSummary();
 
-    auto vY_d_wav = Prompt<ExistingAudioFile> ("Path to V(Y_d): ", CorrectSampleRate);
+    auto vY_d_wav = Prompt<ExistingAudioFile> ("Path to V(Y_d): ", CorrectInputFile);
     vY_d_wav.printSummary();
 
     // Hack: LTspice can only output integer wav, which would be clipped where the values
