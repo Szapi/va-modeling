@@ -25,14 +25,25 @@ namespace TRM
 
     template<std::size_t HeadSz, std::size_t TailSz>
     struct CarryoverBuffer
-    {
-        static_assert(HeadSz >= TailSz);
-
+    {   
         std::array<double, HeadSz + TailSz> buf{};
-
+        
         auto Carry()
         {
+            static_assert(HeadSz >= TailSz);
             return std::copy_n(begin(buf) + HeadSz, TailSz, begin(buf));
+        }
+
+        using SaveBuffer = std::array<double, TailSz>;
+
+        void Save(SaveBuffer& dst) const
+        {
+            std::copy_n(begin(buf) + HeadSz, TailSz, begin(dst));
+        }
+
+        auto Restore(const SaveBuffer& src)
+        {
+            return std::copy_n(begin(src), TailSz, begin(buf));
         }
 
         friend auto begin(      CarryoverBuffer<HeadSz, TailSz>& cob) { return begin(cob.buf); }

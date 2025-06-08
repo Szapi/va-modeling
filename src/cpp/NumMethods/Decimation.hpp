@@ -25,33 +25,66 @@
 namespace TRM
 {
 
-    template<std::size_t ChunkSz, std::size_t SourceSkip, auto Coeffs, auto OutputOp>
+    template<std::size_t ChunkSz, bool OnHeap, class Impl>
     struct FIR_Base
     {
-        TRM_CONSTEXPR std::size_t Taps   = std::size(Coeffs);
-        TRM_CONSTEXPR std::size_t TailSz = ((Taps - 1) / SourceSkip) * SourceSkip;
+        static_assert(ChunkSz % Impl::SourceSkip == 0);
+        
+        TRM_CONSTEXPR std::size_t Taps   = std::size(Impl::Coeffs);
+        TRM_CONSTEXPR std::size_t TailSz = ((Taps - 1) / Impl::SourceSkip) * Impl::SourceSkip;
+        // Alternative formula, should be equivalent:
+        static_assert(TailSz == (Taps - 1) - ((Taps - 1) % Impl::SourceSkip));
 
-        CarryoverBuffer<ChunkSz, TailSz> buf{};
+        using WorkBuffer = CarryoverBuffer<ChunkSz, TailSz>;
+        using SaveBuffer = typename WorkBuffer::SaveBuffer;
 
-        auto Load(auto src) -> decltype(src)
+        std::conditional_t<OnHeap, SaveBuffer, WorkBuffer> persistentBuf;
+
+    private:
+        static auto ApplyImpl(auto dst, const WorkBuffer& workBuf) -> decltype(dst)
         {
-            std::copy_n(src, ChunkSz, buf.Carry());
-            return src + ChunkSz;
-        }
-
-        auto Apply(auto dst) -> decltype(dst)
-        {
-            static_assert(ChunkSz % SourceSkip == 0);
-            auto it = begin(buf);
-            for (auto n = ChunkSz/SourceSkip; n-->0;)
+            auto it = begin(workBuf);
+            for (auto n = ChunkSz/Impl::SourceSkip; n-->0;)
             {
-                OutputOp(*dst, std::inner_product(begin(Coeffs), end(Coeffs), it, 0.0));
-                it  += SourceSkip;
+                Impl::OutputOp(*dst, std::inner_product(begin(Impl::Coeffs), end(Impl::Coeffs), it, 0.0));
+                it  += Impl::SourceSkip;
                 dst += 1;
             }
             return dst;
         }
+
+    public:
+        // Implementation when allocated on heap
+        auto Load(auto src, WorkBuffer& workBuf) -> decltype(src) requires (OnHeap)
+        {
+            std::copy_n(src, ChunkSz, workBuf.Restore(persistentBuf));
+            return src + ChunkSz;
+        }
+        auto Apply(auto dst, const WorkBuffer& workBuf) -> decltype(dst) requires (OnHeap)
+        {
+            const auto result = ApplyImpl(dst, workBuf);
+            workBuf.Save(persistentBuf);
+            return result;
+        }
+
+        // Implementation when allocated on stack
+        auto Load(auto src) -> decltype(src) requires (!OnHeap)
+        {
+            std::copy_n(src, ChunkSz, persistentBuf.Carry());
+            return src + ChunkSz;
+        }
+        auto Apply(auto dst) -> decltype(dst) requires (!OnHeap)
+        {
+            return ApplyImpl(dst, persistentBuf);
+        }
     };
+
+#define TRM_FIR_IMPL(Name,_SourceSkip,_Coeffs,_Op)      \
+struct Name {                                           \
+    TRM_CONSTEXPR std::size_t SourceSkip = _SourceSkip; \
+    TRM_CONSTEXPR auto Coeffs   = _Coeffs;              \
+    TRM_CONSTEXPR auto OutputOp = [](double& d, double v) _Op; \
+}
 
     namespace Decimation
     {
@@ -163,59 +196,94 @@ namespace TRM
                 0.0007589325224462893
             };
 
-        template<std::size_t ChunkSz>
-        using D4x = FIR_Base<ChunkSz, 4, D4x_Coeffs, [](double& d, double v){ d = v; }>;
+        TRM_FIR_IMPL(D4x_Impl, 4, D4x_Coeffs, { d = v; });
+        
+        template<std::size_t ChunkSz, bool OnHeap>
+        using D4x = FIR_Base<ChunkSz, OnHeap, D4x_Impl>;
 
-        template<std::size_t ChunkSz>
+        template<std::size_t ChunkSz, bool OnHeap>
         class D4x_Poly
         {
+            TRM_FIR_IMPL(D4x_Poly_1_Impl, 1, (EveryNth<4, 0>(D4x_Coeffs)), { d  = v; });
+            TRM_FIR_IMPL(D4x_Poly_2_Impl, 1, (EveryNth<4, 1>(D4x_Coeffs)), { d += v; });
+            TRM_FIR_IMPL(D4x_Poly_3_Impl, 1, (EveryNth<4, 2>(D4x_Coeffs)), { d += v; });
+            TRM_FIR_IMPL(D4x_Poly_4_Impl, 1, (EveryNth<4, 3>(D4x_Coeffs)), { d += v; });
+
             static_assert(ChunkSz % 4 == 0);
             TRM_CONSTEXPR std::size_t SubChunkSz = ChunkSz / 4;
 
-            using D4x_Poly_1 = FIR_Base<SubChunkSz, 1, EveryNth<4, 0>(D4x_Coeffs), [](double& d, double v){ d  = v; }>;
-            using D4x_Poly_2 = FIR_Base<SubChunkSz, 1, EveryNth<4, 1>(D4x_Coeffs), [](double& d, double v){ d += v; }>;
-            using D4x_Poly_3 = FIR_Base<SubChunkSz, 1, EveryNth<4, 2>(D4x_Coeffs), [](double& d, double v){ d += v; }>;
-            using D4x_Poly_4 = FIR_Base<SubChunkSz, 1, EveryNth<4, 3>(D4x_Coeffs), [](double& d, double v){ d += v; }>;
+            using Poly_1 = FIR_Base<SubChunkSz, OnHeap, D4x_Poly_1_Impl>;
+            using Poly_2 = FIR_Base<SubChunkSz, OnHeap, D4x_Poly_2_Impl>;
+            using Poly_3 = FIR_Base<SubChunkSz, OnHeap, D4x_Poly_3_Impl>;
+            using Poly_4 = FIR_Base<SubChunkSz, OnHeap, D4x_Poly_4_Impl>;
 
-            D4x_Poly_1 p1;
-            D4x_Poly_2 p2;
-            D4x_Poly_3 p3;
-            D4x_Poly_4 p4;
+            Poly_1 p1;
+            Poly_2 p2;
+            Poly_3 p3;
+            Poly_4 p4;
 
         public:
-            auto Load(auto src) -> decltype(src)
-            {   
+            struct WorkBuffer
+            {
+                typename Poly_1::WorkBuffer buf1;
+                typename Poly_2::WorkBuffer buf2;
+                typename Poly_3::WorkBuffer buf3;
+                typename Poly_4::WorkBuffer buf4;
+            };
+
+            // Implementation when allocated on heap
+            auto Load(auto src, WorkBuffer& workBuf) -> decltype(src) requires (OnHeap)
+            {
+                return LoadImpl(src,
+                                workBuf.buf1.Restore(p1.persistentBuf),
+                                workBuf.buf2.Restore(p2.persistentBuf),
+                                workBuf.buf3.Restore(p3.persistentBuf),
+                                workBuf.buf4.Restore(p4.persistentBuf));
+            }
+            auto Apply(auto dst, const WorkBuffer& workBuf) -> decltype(dst) requires (OnHeap)
+            {
+                p1.Apply(dst, workBuf.buf1);
+                p2.Apply(dst, workBuf.buf2);
+                p3.Apply(dst, workBuf.buf3);
+                return p4.Apply(dst, workBuf.buf4);
+            }
+
+            // Implementation when allocated on stack
+            auto Load(auto src) -> decltype(src) requires (!OnHeap)
+            {
+                return LoadImpl(src,
+                                p1.persistentBuf.Carry(),
+                                p2.persistentBuf.Carry(),
+                                p3.persistentBuf.Carry(),
+                                p4.persistentBuf.Carry());
+            }
+            auto Apply(auto dst) -> decltype(dst) requires (!OnHeap)
+            {
+                p1.Apply(dst);
+                p2.Apply(dst);
+                p3.Apply(dst);
+                return p4.Apply(dst);
+            }
+
+        private:
+            static auto LoadImpl(auto src, auto buf1, auto buf2, auto buf3, auto buf4) -> decltype(src)
+            {
                 auto ReadTo = [&src](auto& it)
                 {
                     *it = *src;
                     ++src;
                     ++it;
                 };
-                // Manually load them into the buffers
-                auto it1 = p1.buf.Carry();
-                auto it2 = p2.buf.Carry();
-                auto it3 = p3.buf.Carry();
-                auto it4 = p4.buf.Carry();
                 for(auto n = SubChunkSz; n-->0;)
                 {
-                    ReadTo(it1);
-                    ReadTo(it2);
-                    ReadTo(it3);
-                    ReadTo(it4);
+                    ReadTo(buf1);
+                    ReadTo(buf2);
+                    ReadTo(buf3);
+                    ReadTo(buf4);
                 }
                 return src;
             }
 
-            auto Apply(auto dst) -> decltype(dst)
-            {
-                // Assemble the output on the stack rather than directly in dst
-                std::array<double, SubChunkSz> outBuf;
-                p1.Apply(begin(outBuf));
-                p2.Apply(begin(outBuf));
-                p3.Apply(begin(outBuf));
-                p4.Apply(begin(outBuf));
-                return std::copy_n(begin(outBuf), SubChunkSz, dst);
-            }
         };
 
     } // namespace Decimation

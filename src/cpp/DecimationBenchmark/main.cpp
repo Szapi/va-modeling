@@ -44,7 +44,7 @@ int main ()
 
     auto CompareRegularVsPolyphase = [&]<std::size_t ChunkSz>(std::integral_constant<std::size_t, ChunkSz>, const bool exportResult) -> void
     {
-        static_assert(ChunkSz >= Decimation::D4x<ChunkSz>::Taps);
+        static_assert(ChunkSz >= Decimation::D4x_Coeffs.size());
         static_assert(ChunkSz % 4 == 0);
 
         const auto Iterations = in192.size() / ChunkSz;
@@ -90,8 +90,8 @@ int main ()
             Flush();
         };
 
-        RunBench(Decimation::D4x<ChunkSz>{},      format("Naive approach (chunk size = {}):",     ChunkSz));
-        RunBench(Decimation::D4x_Poly<ChunkSz>{}, format("Polyphase approach (chunk size = {}):", ChunkSz));
+        RunBench(Decimation::D4x<ChunkSz, false>{},      format("Naive approach (chunk size = {}):",     ChunkSz));
+        RunBench(Decimation::D4x_Poly<ChunkSz, false>{}, format("Polyphase approach (chunk size = {}):", ChunkSz));
     };
 
     CompareRegularVsPolyphase(std::integral_constant<std::size_t, 128>{}, true);
