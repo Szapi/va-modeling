@@ -79,19 +79,19 @@ namespace TRM
 
         auto it = std::lower_bound(Tone_IIR_Table.begin(), Tone_IIR_Table.end(), param,
             [](const IIR_Data& data, double value) { return data.param < value; });
-    
+
         if (it == Tone_IIR_Table.begin()) ++it;
-    
+
         const auto& lo = *(it - 1);
         const auto& hi = *it;
         double t = (param - lo.param) / (hi.param - lo.param);
-    
+
         double p1   = std::lerp(lo.p1,   hi.p1,   t);
         double p2   = std::lerp(lo.p2,   hi.p2,   t);
         double z1   = std::lerp(lo.z1,   hi.z1,   t);
         double z2   = std::lerp(lo.z2,   hi.z2,   t);
         double gain = std::lerp(lo.gain, hi.gain, t);
-    
+
         return ToCoefficients({p1, p2, z1, z2, gain, param});
     }
 

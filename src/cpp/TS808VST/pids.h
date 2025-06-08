@@ -21,9 +21,9 @@ namespace TRM {
 
 enum ParameterID
 {
-	Gain = 1,
-	Tone,
-	Level
+    Gain = 1,
+    Tone,
+    Level
 };
 
 } // TRM

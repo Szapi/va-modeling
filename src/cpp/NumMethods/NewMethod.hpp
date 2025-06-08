@@ -50,9 +50,9 @@ namespace TRM::NewMethod
 
             TRM_DEFINE_POW(f, 2);
             TRM_DEFINE_POW(f, 3);
-            
+
             TRM_DEFINE_POW(y, 2);
-            
+
             TRM_DEFINE_POW(h, 2);
             TRM_DEFINE_POW(h, 3);
 

@@ -31,120 +31,120 @@ namespace TRM {
 //------------------------------------------------------------------------
 tresult PLUGIN_API TS808ClipperController::initialize (FUnknown* context)
 {
-	tresult result = EditControllerEx1::initialize (context);
-	if (result != kResultOk)
-	{
-		return result;
-	}
+tresult result = EditControllerEx1::initialize (context);
+if (result != kResultOk)
+{
+return result;
+}
 
-	parameters.addParameter (STR ("Gain"), STR ("%"), 0, 0., ParameterInfo::kCanAutomate, ParameterID::Gain);
-	parameters.addParameter (STR ("Tone"), STR ("%"), 0, 0., ParameterInfo::kCanAutomate, ParameterID::Tone);
-	parameters.addParameter (STR ("Level"), STR ("%"), 0, 0., ParameterInfo::kCanAutomate, ParameterID::Level);
+parameters.addParameter (STR ("Gain"), STR ("%"), 0, 0., ParameterInfo::kCanAutomate, ParameterID::Gain);
+parameters.addParameter (STR ("Tone"), STR ("%"), 0, 0., ParameterInfo::kCanAutomate, ParameterID::Tone);
+parameters.addParameter (STR ("Level"), STR ("%"), 0, 0., ParameterInfo::kCanAutomate, ParameterID::Level);
 
-	return result;
+return result;
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API TS808ClipperController::terminate ()
 {
-	return EditControllerEx1::terminate ();
+return EditControllerEx1::terminate ();
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API TS808ClipperController::setComponentState (IBStream* state)
 {
-	if (!state)
-		return kResultFalse;
+if (!state)
+return kResultFalse;
 
-	IBStreamer streamer (state, kLittleEndian);
-	{
-		ParamValue gain;
-		if (!streamer.readDouble (gain))
-			return kResultFalse;
+IBStreamer streamer (state, kLittleEndian);
+{
+ParamValue gain;
+if (!streamer.readDouble (gain))
+return kResultFalse;
 
-		if (auto param = parameters.getParameter (ParameterID::Gain))
-			param->setNormalized (gain);
-	}
-	{
-		ParamValue tone;
-		if (!streamer.readDouble (tone))
-			return kResultFalse;
+if (auto param = parameters.getParameter (ParameterID::Gain))
+param->setNormalized (gain);
+}
+{
+ParamValue tone;
+if (!streamer.readDouble (tone))
+return kResultFalse;
 
-		if (auto param = parameters.getParameter (ParameterID::Tone))
-			param->setNormalized (tone);
-	}
-	{
-		ParamValue level;
-		if (!streamer.readDouble (level))
-			return kResultFalse;
+if (auto param = parameters.getParameter (ParameterID::Tone))
+param->setNormalized (tone);
+}
+{
+ParamValue level;
+if (!streamer.readDouble (level))
+return kResultFalse;
 
-		if (auto param = parameters.getParameter (ParameterID::Level))
-			param->setNormalized (level);
-	}
-	return kResultOk;
+if (auto param = parameters.getParameter (ParameterID::Level))
+param->setNormalized (level);
+}
+return kResultOk;
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API TS808ClipperController::setState (IBStream* state)
 {
-	if (!state)
-		return kResultFalse;
+if (!state)
+return kResultFalse;
 
-	IBStreamer streamer (state, kLittleEndian);
-	{
-		ParamValue gain;
-		if (!streamer.readDouble (gain))
-			return kResultFalse;
+IBStreamer streamer (state, kLittleEndian);
+{
+ParamValue gain;
+if (!streamer.readDouble (gain))
+return kResultFalse;
 
-		if (auto param = parameters.getParameter (ParameterID::Gain))
-			param->setNormalized (gain);
-	}
-	{
-		ParamValue tone;
-		if (!streamer.readDouble (tone))
-			return kResultFalse;
+if (auto param = parameters.getParameter (ParameterID::Gain))
+param->setNormalized (gain);
+}
+{
+ParamValue tone;
+if (!streamer.readDouble (tone))
+return kResultFalse;
 
-		if (auto param = parameters.getParameter (ParameterID::Tone))
-			param->setNormalized (tone);
-	}
-	{
-		ParamValue level;
-		if (!streamer.readDouble (level))
-			return kResultFalse;
+if (auto param = parameters.getParameter (ParameterID::Tone))
+param->setNormalized (tone);
+}
+{
+ParamValue level;
+if (!streamer.readDouble (level))
+return kResultFalse;
 
-		if (auto param = parameters.getParameter (ParameterID::Level))
-			param->setNormalized (level);
-	}
+if (auto param = parameters.getParameter (ParameterID::Level))
+param->setNormalized (level);
+}
 
-	return kResultTrue;
+return kResultTrue;
 }
 
 //------------------------------------------------------------------------
 tresult PLUGIN_API TS808ClipperController::getState (IBStream* state)
 {
-	IBStreamer streamer (state, kLittleEndian);
+IBStreamer streamer (state, kLittleEndian);
 
-	if (auto param = parameters.getParameter (ParameterID::Gain))
-		streamer.writeDouble (param->getNormalized ());
-	
-	if (auto param = parameters.getParameter (ParameterID::Tone))
-		streamer.writeDouble (param->getNormalized ());
+if (auto param = parameters.getParameter (ParameterID::Gain))
+streamer.writeDouble (param->getNormalized ());
 
-	if (auto param = parameters.getParameter (ParameterID::Level))
-		streamer.writeDouble (param->getNormalized ());
+if (auto param = parameters.getParameter (ParameterID::Tone))
+streamer.writeDouble (param->getNormalized ());
 
-	return kResultTrue;
+if (auto param = parameters.getParameter (ParameterID::Level))
+streamer.writeDouble (param->getNormalized ());
+
+return kResultTrue;
 }
 
 //------------------------------------------------------------------------
 IPlugView* PLUGIN_API TS808ClipperController::createView (FIDString name)
 {
-	if (FIDStringsEqual (name, Vst::ViewType::kEditor))
-	{
-		auto* view = new VSTGUI::VST3Editor (this, "view", "editor.uidesc");
-		return view;
-	}
-	return nullptr;
+if (FIDStringsEqual (name, Vst::ViewType::kEditor))
+{
+auto* view = new VSTGUI::VST3Editor (this, "view", "editor.uidesc");
+return view;
+}
+return nullptr;
 }
 
 //------------------------------------------------------------------------

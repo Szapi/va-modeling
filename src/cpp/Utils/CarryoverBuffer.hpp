@@ -25,9 +25,9 @@ namespace TRM
 
     template<std::size_t HeadSz, std::size_t TailSz>
     struct CarryoverBuffer
-    {   
+    {
         std::array<double, HeadSz + TailSz> buf{};
-        
+
         auto Carry()
         {
             static_assert(HeadSz >= TailSz);
@@ -49,5 +49,5 @@ namespace TRM
         friend auto begin(      CarryoverBuffer<HeadSz, TailSz>& cob) { return begin(cob.buf); }
         friend auto begin(const CarryoverBuffer<HeadSz, TailSz>& cob) { return begin(cob.buf); }
     };
-    
+
 } // namespace TRM

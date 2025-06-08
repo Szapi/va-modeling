@@ -58,7 +58,7 @@ namespace TRM
         const double x = std::clamp(xIn, lower.x, upper.x);
         return std::lerp(lower.y, upper.y, (x - lower.x) / (upper.x - lower.x));
     }
-    
+
     template<std::size_t N, std::size_t Start, std::size_t Sz>
     consteval auto EveryNth(const std::array<double, Sz>& arr)
     {

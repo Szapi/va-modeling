@@ -29,7 +29,7 @@ namespace TRM
     {
     public:
         constexpr CircleBuffer() = default;
-    
+
         T& RotateLeft ()
         {
             const auto idxLastItemAfterRotate = idxBegin;
@@ -90,5 +90,5 @@ namespace std
     {
         return Sz;
     }
-    
+
 } // namespace std

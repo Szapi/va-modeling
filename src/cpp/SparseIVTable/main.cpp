@@ -88,7 +88,7 @@ int main ()
         --currSector.end;
 
         cout << "Shrank a sector: " << currSector.start->x << " - " << currSector.end->x << "\t([" << distance(it, currSector.start) << "] - [" << distance(it, currSector.end) << "])\n";
-        
+
         currSector.start = currSector.end;
         currSector.end += 2;
     } while (currSector.end < end(antiParallelDiodeClippingTable));

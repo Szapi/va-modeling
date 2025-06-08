@@ -49,5 +49,5 @@ namespace TRM::RK4
         double y;
         ODE odeDescriptor;
     };
-    
+
 } // namespace TRM::RK4

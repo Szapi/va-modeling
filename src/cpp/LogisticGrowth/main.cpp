@@ -48,7 +48,7 @@ int main(int argC, char** argVal)
     const double y0 = Prompt<double>("Initial value: "sv);
 
     NewMethod::Executor x(h, y0, move(derivatives));
-        
+
     const int totalSteps            = Prompt<int>("Total steps (N > 0): "sv, Positive);
     const int stepsBetweenPrintouts = Prompt<int>("Steps between printouts (P > 0): "sv, Positive);
 
@@ -56,5 +56,5 @@ int main(int argC, char** argVal)
         if (const double y = x.DoOneStep(); t % stepsBetweenPrintouts == 0)
             cout << format(" t = {:5.2f}     y(t) ~ {:7.4f}\n", t*h, y);
 
-    return 0;      
+    return 0;
 }

@@ -29,7 +29,7 @@ namespace TRM
     struct FIR_Base
     {
         static_assert(ChunkSz % Impl::SourceSkip == 0);
-        
+
         TRM_CONSTEXPR std::size_t Taps   = std::size(Impl::Coeffs);
         TRM_CONSTEXPR std::size_t TailSz = ((Taps - 1) / Impl::SourceSkip) * Impl::SourceSkip;
         // Alternative formula, should be equivalent:
@@ -197,7 +197,7 @@ struct Name {                                           \
             };
 
         TRM_FIR_IMPL(D4x_Impl, 4, D4x_Coeffs, { d = v; });
-        
+
         template<std::size_t ChunkSz, bool OnHeap>
         using D4x = FIR_Base<ChunkSz, OnHeap, D4x_Impl>;
 

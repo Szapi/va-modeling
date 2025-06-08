@@ -73,7 +73,7 @@ int main ()
         }
     };
 
-    RK4::Executor rk4{std::integral_constant<double, 1. / 48'000>{}, 0.0, std::move(diffEquationDescriptor)};    
+    RK4::Executor rk4{std::integral_constant<double, 1. / 48'000>{}, 0.0, std::move(diffEquationDescriptor)};
 
     vector<double> output48;
     output48.reserve(inputFile192.samples[LeftCh].size() / 4);

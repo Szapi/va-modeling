@@ -31,28 +31,28 @@ using namespace TRM;
 //  VST Plug-in Entry
 //------------------------------------------------------------------------
 
-BEGIN_FACTORY_DEF ("Ték Róbert Máté", 
-			       "https://github.com/Szapi/va-modeling", 
-			       "mailto:eppenpontaz@gmail.com")
+BEGIN_FACTORY_DEF ("Ték Róbert Máté",
+                   "https://github.com/Szapi/va-modeling",
+                   "mailto:eppenpontaz@gmail.com")
 
-	DEF_CLASS2 (INLINE_UID_FROM_FUID(kTS808ClipperProcessorUID),
-				PClassInfo::kManyInstances,
-				kVstAudioEffectClass,
-				stringPluginName,
-				Vst::kDistributable,
-				TS808ClipperVST3Category,
-				FULL_VERSION_STR,
-				kVstVersionString,
-				TS808ClipperProcessor::createInstance)
+    DEF_CLASS2 (INLINE_UID_FROM_FUID(kTS808ClipperProcessorUID),
+                PClassInfo::kManyInstances,
+                kVstAudioEffectClass,
+                stringPluginName,
+                Vst::kDistributable,
+                TS808ClipperVST3Category,
+                FULL_VERSION_STR,
+                kVstVersionString,
+                TS808ClipperProcessor::createInstance)
 
-	DEF_CLASS2 (INLINE_UID_FROM_FUID (kTS808ClipperControllerUID),
-				PClassInfo::kManyInstances,
-				kVstComponentControllerClass,
-				stringPluginName "Controller",
-				0,
-				"",
-				FULL_VERSION_STR,
-				kVstVersionString,
-				TS808ClipperController::createInstance)
+    DEF_CLASS2 (INLINE_UID_FROM_FUID (kTS808ClipperControllerUID),
+                PClassInfo::kManyInstances,
+                kVstComponentControllerClass,
+                stringPluginName "Controller",
+                0,
+                "",
+                FULL_VERSION_STR,
+                kVstVersionString,
+                TS808ClipperController::createInstance)
 
 END_FACTORY

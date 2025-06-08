@@ -29,5 +29,5 @@ namespace TRM
     inline constexpr double Rd = 500'000.; // Drive potentiometer (500k)
 
     inline constexpr double OpAmpBias = 4.5; // Volts
-    
+
 } // namespace TRM
